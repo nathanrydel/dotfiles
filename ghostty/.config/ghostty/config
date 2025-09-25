@@ -1,0 +1,9 @@
+theme = tokyonight
+font-family = Jet Brains Mono
+font-size = 14
+gtk-titlebar = false
+background-opacity = 0.95
+background-blur-radius = 20
+window-decoration = true
+macos-option-as-alt = true
+mouse-hide-while-typing = true
