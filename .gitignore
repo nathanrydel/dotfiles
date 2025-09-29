@@ -93,3 +93,15 @@ vendor/bundle/
 /build/
 /dist/
 /target/
+
+# tmux config
+tmux/plugins
+
+# Raycast
+raycast
+
+# Fzf
+fzf
+
+# History
+history.txt
