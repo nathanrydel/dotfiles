@@ -126,3 +126,5 @@ function pg_restart() {
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 eval "$(uv generate-shell-completion zsh)"
 eval "$(uvx --generate-shell-completion zsh)"
+
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
