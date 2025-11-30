@@ -9,8 +9,8 @@ autoload bashcompinit && bashcompinit
 autoload -Uz compinit
 compinit
 
-# Zsh History Configuration (Uses portable ~)
-HISTFILE=~/.history       
+# Zsh History Configuration
+HISTFILE=~/.history       # Where history is saved
 HISTSIZE=10000            
 SAVEHIST=50000            
 setopt inc_append_history 
@@ -24,12 +24,12 @@ setopt inc_append_history
 eval "$(starship init zsh)"
 export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 
-# Zoxide, Atuin, Direnv (Portable initializers)
+# Zoxide, Atuin, Direnv (Standard initializers)
 eval "$(zoxide init zsh)"
 eval "$(atuin init zsh)"
 eval "$(direnv hook zsh)"
 
-# Mise (Assumes mise executable is in the PATH from Homebrew/Nix setup)
+# Mise (Version Manager)
 eval "$(mise activate zsh)"
 
 # FZF (Fuzzy Finder)
@@ -37,17 +37,29 @@ source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# Zsh Autosuggestions (Uses portable 'brew --prefix')
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-bindkey '^w' autosuggest-execute
-bindkey '^e' autosuggest-accept
-bindkey '^u' autosuggest-toggle
+
+# --- Zsh Autosuggestions (CRITICAL PORTABILITY FIX) ---
+if [[ "$(uname)" == "Darwin" ]]; then
+    # macOS path (using Homebrew)
+    source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [[ "$(uname)" == *"Linux"* ]]; then
+    # Linux path (common Pacman/AUR installation path)
+    if [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+        source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+    else
+        echo "Error: zsh-autosuggestions not found at standard path. Please check installation."
+    fi
+fi
+# --- End Autosuggestions Fix ---
 
 # VI Mode Keybindings
 bindkey jj vi-cmd-mode
 bindkey '^L' vi-forward-word 
 bindkey '^k' up-line-or-search
 bindkey '^j' down-line-or-search
+bindkey '^w' autosuggest-execute
+bindkey '^e' autosuggest-accept
+bindkey '^u' autosuggest-toggle
 
 
 # ==============================
@@ -57,11 +69,12 @@ bindkey '^j' down-line-or-search
 # Core System Exports
 export LANG=en_US.UTF-8
 export XDG_CONFIG_HOME="$HOME/.config"
+export SUDO_EDITOR="$EDITOR"
 
 # Go Path (Portable)
 export GOPATH="$HOME/go"
 
-# Nix Configuration (Uses portable $HOME)
+# Nix Configuration (Portable)
 export NIX_CONF_DIR="$HOME/.config/nix"
 export PATH=/run/current-system/sw/bin:$PATH
 
@@ -69,9 +82,7 @@ if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
 	. '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 fi
 
-# ==============================
-# 4. OS-SPECIFIC CONFIGURATION
-# ==============================
+# --- OS-SPECIFIC PATH AND ALIAS SETUP (CRITICAL FIX) ---
 
 if [[ "$(uname)" == "Darwin" ]]; then
     # --- macOS (nrdevs) ---
@@ -80,19 +91,19 @@ if [[ "$(uname)" == "Darwin" ]]; then
     # Homebrew path initialization
     eval "$(/opt/homebrew/bin/brew shellenv)"
 
-    # PATH cleanup for macOS (Uses portable $HOME and $GOPATH)
+    # PATH cleanup for macOS
     export PATH="$(brew --prefix)/bin:$PATH"
     export PATH="$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH"
 
     # Aliases
     alias update='brew update && brew upgrade'
-    notify_cmd="terminal-notifier -message" # Or osascript if preferred
+    notify_cmd="terminal-notifier -message"
 
 elif [[ "$(uname)" == *"Linux"* ]]; then
     # --- Linux (Omarchy / nr-navys) ---
     export EDITOR="nvim" # Assumes nvim is in standard path
     
-    # PATH cleanup for Linux (Using common paths for Omarchy)
+    # Standard Linux PATH
     export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
     export PATH="$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH"
     
@@ -104,9 +115,9 @@ fi
 # Ensure mise/asdf paths are checked first (Portable)
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$HOME/.local/share/omarchy/bin:$PATH"
 
+
 # ==============================
-# 5. TMUX Session Management Function & Alias
-# (Uses the portable $notify_cmd)
+# 4. TMUX Session Management Function & Alias
 # ==============================
 
 new_tmux () {
@@ -139,7 +150,7 @@ alias tm=new_tmux
 
 
 # ==============================
-# 6. Functions
+# 5. Functions
 # ==============================
 
 # Ranger File Manager Function
@@ -173,14 +184,14 @@ gitid() {
 
   case "$ID_TYPE" in
     work)
-      # 🚨 WORK CREDENTIALS 🚨
+      # WORK CREDENTIALS
       name="Nathan Rydel"
       email="nathan.rydel@navys.ai"
       ;;
     personal)
-      # 🚨 PERSONAL CREDENTIALS 🚨
+      # PERSONAL CREDENTIALS
       name="NR Devs"
-      email="nrdevs@personal.email" # Placeholder
+      email="nrdevs@personal.email" 
       ;;
     *)
       echo "Error: Invalid ID type. Usage: gitid [work|personal]" >&2
@@ -188,25 +199,22 @@ gitid() {
       ;;
   esac
 
-  # Execute the local config commands
   git config user.name "$name"
   git config user.email "$email"
-
-  # Confirmation
   echo "✅ Local Git identity set to '$ID_TYPE'."
   git config --local --list | grep user.
 }
 
 
 # ==============================
-# 7. Aliases (Core Development Focused)
+# 6. Aliases (Core Development Focused)
 # ==============================
 
 # --- General System & Tools ---
 alias cl='clear'
 alias la=tree
 alias cat=bat
-alias v="$HOME/.nix-profile/bin/nvim" # Uses portable $HOME
+alias v="$HOME/.nix-profile/bin/nvim"
 alias http="xh"
 alias ci='code-insiders'
 
