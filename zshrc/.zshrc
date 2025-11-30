@@ -46,6 +46,9 @@ elif [[ "$(uname)" == *"Linux"* ]]; then
     # Linux path (common Pacman/AUR installation path)
     if [ -f "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
         source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+    elif [ -f "/usr/share/zsh/site-functions/zsh-autosuggestions.plugin.zsh"]; then
+      # Check a secondary common path for plugins
+      source /usr/share/zsh/site-functions/zsh-autosuggestions.plugin.zsh
     else
         echo "Error: zsh-autosuggestions not found at standard path. Please check installation."
     fi
