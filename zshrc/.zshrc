@@ -3,18 +3,17 @@
 # ==============================
 # 1. Base Zsh Settings & Completion
 # ==============================
-# Reevaluate the prompt string each time it's displaying a prompt
 setopt prompt_subst
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 autoload bashcompinit && bashcompinit
 autoload -Uz compinit
 compinit
 
-# Zsh History Configuration
-HISTFILE=~/.history       # Where history is saved
+# Zsh History Configuration (Uses portable ~)
+HISTFILE=~/.history       
 HISTSIZE=10000            
 SAVEHIST=50000            
-setopt inc_append_history # Appends commands to the history file immediately.
+setopt inc_append_history 
 
 
 # ==============================
@@ -23,20 +22,14 @@ setopt inc_append_history # Appends commands to the history file immediately.
 
 # Starship Prompt
 eval "$(starship init zsh)"
-export STARSHIP_CONFIG=~/.config/starship/starship.toml
+export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
 
-# Zoxide (Smart directory jumping)
+# Zoxide, Atuin, Direnv (Portable initializers)
 eval "$(zoxide init zsh)"
-
-# Atuin (Optional, for advanced shell history synchronization/search)
 eval "$(atuin init zsh)"
-
-# Direnv (Using the hook for Zsh)
-# Note: Requires 'direnv' executable to be in your PATH.
 eval "$(direnv hook zsh)"
 
-# Mise (Version Manager - formerly asdf/rtx)
-# Note: Ensure mise is installed via Homebrew and its executable is found.
+# Mise (Assumes mise executable is in the PATH from Homebrew/Nix setup)
 eval "$(mise activate zsh)"
 
 # FZF (Fuzzy Finder)
@@ -44,7 +37,7 @@ source <(fzf --zsh)
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
-# Zsh Autosuggestions
+# Zsh Autosuggestions (Uses portable 'brew --prefix')
 source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 bindkey '^w' autosuggest-execute
 bindkey '^e' autosuggest-accept
@@ -63,31 +56,57 @@ bindkey '^j' down-line-or-search
 
 # Core System Exports
 export LANG=en_US.UTF-8
-export XDG_CONFIG_HOME="/Users/omerxx/.config"
+export XDG_CONFIG_HOME="$HOME/.config"
 
-# Editor Configuration
-export EDITOR=/opt/homebrew/bin/nvim
-export SUDO_EDITOR="$EDITOR"
+# Go Path (Portable)
+export GOPATH="$HOME/go"
 
-# Go Path (Your specified location)
-export GOPATH='/Users/omerxx/go'
-
-# Nix Configuration (Your specified configuration blocks)
-export NIX_CONF_DIR=$HOME/.config/nix
+# Nix Configuration (Uses portable $HOME)
+export NIX_CONF_DIR="$HOME/.config/nix"
 export PATH=/run/current-system/sw/bin:$PATH
 
 if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
 	. '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
 fi
 
-# Consolidated PATH (Includes homebrew, system, go, cargo, and vimpkg)
-export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/omer/.vimpkg/bin:${GOPATH}/bin:/Users/omerxx/.cargo/bin:$PATH
-# Ensure mise/asdf paths are checked first
+# ==============================
+# 4. OS-SPECIFIC CONFIGURATION
+# ==============================
+
+if [[ "$(uname)" == "Darwin" ]]; then
+    # --- macOS (nrdevs) ---
+    export EDITOR="$(brew --prefix)/bin/nvim"
+    
+    # Homebrew path initialization
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+
+    # PATH cleanup for macOS (Uses portable $HOME and $GOPATH)
+    export PATH="$(brew --prefix)/bin:$PATH"
+    export PATH="$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH"
+
+    # Aliases
+    alias update='brew update && brew upgrade'
+    notify_cmd="terminal-notifier -message" # Or osascript if preferred
+
+elif [[ "$(uname)" == *"Linux"* ]]; then
+    # --- Linux (Omarchy / nr-navys) ---
+    export EDITOR="nvim" # Assumes nvim is in standard path
+    
+    # PATH cleanup for Linux (Using common paths for Omarchy)
+    export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH
+    export PATH="$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH"
+    
+    # Aliases
+    alias update='sudo pacman -Syu' # Use pacman update command
+    notify_cmd="notify-send"
+fi
+
+# Ensure mise/asdf paths are checked first (Portable)
 export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$HOME/.local/share/omarchy/bin:$PATH"
 
-
 # ==============================
-# 4. TMUX Session Management Function & Alias
+# 5. TMUX Session Management Function & Alias
+# (Uses the portable $notify_cmd)
 # ==============================
 
 new_tmux () {
@@ -112,7 +131,7 @@ new_tmux () {
   fi
 
   if [ -n "$notification" ]; then
-    notify-send "$notification"
+    $notify_cmd "$notification"
   fi
 }
 
@@ -120,7 +139,7 @@ alias tm=new_tmux
 
 
 # ==============================
-# 5. Functions
+# 6. Functions
 # ==============================
 
 # Ranger File Manager Function
@@ -147,21 +166,21 @@ fcd() { cd "$(find . -type d -not -path '*/.*' | fzf)" && l; }
 f() { echo "$(find . -type f -not -path '*/.*' | fzf)" | pbcopy }
 fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
 
-# --- Git Identity Switching Function ---
+# Git Identity Switching Function
 gitid() {
   local name email
   local ID_TYPE="$1"
 
   case "$ID_TYPE" in
     work)
-      # 🚨 UPDATE THESE PLACEHOLDERS WITH YOUR WORK CREDENTIALS 🚨
-      name="Your Work Name"
-      email="work.email@navys.ai"
+      # 🚨 WORK CREDENTIALS 🚨
+      name="Nathan Rydel"
+      email="nathan.rydel@navys.ai"
       ;;
     personal)
-      # 🚨 UPDATE THESE PLACEHOLDERS WITH YOUR PERSONAL CREDENTIALS 🚨
-      name="Your Personal Name"
-      email="personal.email@example.com"
+      # 🚨 PERSONAL CREDENTIALS 🚨
+      name="NR Devs"
+      email="nrdevs@personal.email" # Placeholder
       ;;
     *)
       echo "Error: Invalid ID type. Usage: gitid [work|personal]" >&2
@@ -180,14 +199,14 @@ gitid() {
 
 
 # ==============================
-# 6. Aliases (Core Development Focused)
+# 7. Aliases (Core Development Focused)
 # ==============================
 
 # --- General System & Tools ---
 alias cl='clear'
 alias la=tree
 alias cat=bat
-alias v="/Users/omerxx/.nix-profile/bin/nvim"
+alias v="$HOME/.nix-profile/bin/nvim" # Uses portable $HOME
 alias http="xh"
 alias ci='code-insiders'
 
