@@ -14,15 +14,6 @@ fi
 # ==============================
 # 2. Base Zsh Settings & Completion
 # ==============================
-
-setopt prompt_subst
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
-autoload bashcompinit && bashcompinit
-# --- Zsh Configuration Start ---
-
-# ==============================
-# 1. Base Zsh Settings & Completion
-# ==============================
 setopt prompt_subst
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 autoload bashcompinit && bashcompinit
@@ -36,32 +27,52 @@ SAVEHIST=50000
 setopt inc_append_history
 
 # ==============================
-# 3. External Tool Initialization & Keybindings
+# 3. External Tool Initialization
 # ==============================
 
 # Starship Prompt
-export STARSHIP_CONFIG=~/.config/starship/starship.toml
-eval "$(starship init zsh)"
+if command -v starship &> /dev/null; then
+    export STARSHIP_CONFIG=~/.config/starship/starship.toml
+    eval "$(starship init zsh)"
+fi
 
 # Zoxide (Smart directory jumping)
-eval "$(zoxide init zsh)"
+if command -v zoxide &> /dev/null; then
+    eval "$(zoxide init zsh)"
+fi
 
 # Atuin (Optional, for advanced shell history synchronization/search)
-eval "$(atuin init zsh)"
+if command -v atuin &> /dev/null; then
+    eval "$(atuin init zsh)"
+fi
 
 # Direnv
-eval "$(direnv hook zsh)"
+if command -v direnv &> /dev/null; then
+    eval "$(direnv hook zsh)"
+fi
 
 # FZF (Fuzzy Finder) Configuration
-source <(fzf --zsh)
-export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+if command -v fzf &> /dev/null; then
+    source <(fzf --zsh)
+    export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
+    [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+fi
 
 # Zsh Autosuggestions
-source $(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+if command -v brew &> /dev/null && [ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+    source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+elif [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+    source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+elif [ -f /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
+    source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+fi
 bindkey '^w' autosuggest-execute
 bindkey '^e' autosuggest-accept
 bindkey '^u' autosuggest-toggle
+
+# ==============================
+# 4. Keybindings
+# ==============================
 
 # VI Mode Keybindings
 bindkey jj vi-cmd-mode
@@ -70,28 +81,28 @@ bindkey '^k' up-line-or-search
 bindkey '^j' down-line-or-search
 
 # ==============================
-# 4. Path & Environment Variables (Exports)
+# 5. Path & Environment Variables (Exports)
 # ==============================
 
 # Core System Exports
 export LANG=en_US.UTF-8
-export XDG_CONFIG_HOME="/Users/nrdevs/.config"
+export XDG_CONFIG_HOME="$HOME/.config"
 
 # Editor Configuration
 export EDITOR=/opt/homebrew/bin/nvim
 export SUDO_EDITOR="$EDITOR"
 
 # Go Path (Your specified location)
-export GOPATH='/Users/nrdevs/go'
+export GOPATH="$HOME/go"
 
 # Consolidated PATH (Includes homebrew, system, go, cargo, and vimpkg)
-export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Users/nrdevs/.vimpkg/bin:${GOPATH}/bin:/Users/nrdevs/.cargo/bin:$PATH
+export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH
 
-# Ensure mise/asdf paths are checked first
-export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$HOME/.local/share/omarchy/bin:$PATH"
+# Additional local paths
+export PATH="$HOME/.local/share/omarchy/bin:$PATH"
 
 # ==============================
-# 5. TMUX Session Management Function & Alias
+# 6. TMUX Session Management Function & Alias
 # ==============================
 
 new_tmux () {
@@ -122,7 +133,7 @@ new_tmux () {
 alias tm=new_tmux
 
 # ==============================
-# 6. Functions
+# 7. Functions
 # ==============================
 
 # Ranger File Manager Function
@@ -145,12 +156,12 @@ alias rr='ranger'
 
 # Navigation Functions
 cx() { cd "$@" && l; }
-fcd() { cd "$(find . -type d -not -path '/.' | fzf)" && l; }
+fcd() { cd "$(find . -type d -not -path '*/.*' | fzf)" && l; }
 f() { echo "$(find . -type f -not -path '*/.*' | fzf)" | pbcopy }
-fv() { nvim "$(find . -type f -not -path '/.' | fzf)" }
+fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
 
 # ==============================
-# 7. Aliases (Core Development Focused)
+# 8. Aliases (Core Development Focused)
 # ==============================
 
 # --- General System & Tools ---
