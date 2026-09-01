@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# --- CONSOLIDATED Zsh Configuration (Optimized for macOS/Homebrew) ---
+# --- CONSOLIDATED Zsh Configuration (Optimized for macOS) ---
 # -------------------------------------------------------------
 
 # ==============================
@@ -58,7 +58,7 @@ if command -v fzf &> /dev/null; then
     [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 fi
 
-# Zsh Autosuggestions
+# Zsh Autosuggestions (Kept in Homebrew per our split)
 if command -v brew &> /dev/null && [ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
     source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
 elif [ -f /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]; then
@@ -84,22 +84,38 @@ bindkey '^j' down-line-or-search
 # 5. Path & Environment Variables (Exports)
 # ==============================
 
-# Core System Exports
 export LANG=en_US.UTF-8
 export XDG_CONFIG_HOME="$HOME/.config"
 
-# Editor Configuration
-export EDITOR=/opt/homebrew/bin/nvim
-export SUDO_EDITOR="$EDITOR"
-
-# Go Path (Your specified location)
-export GOPATH="$HOME/go"
-
-# Consolidated PATH (Includes homebrew, system, go, cargo, and vimpkg)
-export PATH=/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.vimpkg/bin:${GOPATH}/bin:$HOME/.cargo/bin:$PATH
-
-# Additional local paths
+# --- Path Hierarchy (Order Matters!) ---
+# 1. Local Bins
+# 2. Homebrew (GUI Casks and fallback formulas)
+# 3. System Paths
 export PATH="$HOME/.local/share/omarchy/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+
+# Go & Rust & Vim Packages
+export GOPATH="$HOME/go"
+export GOBIN="${GOPATH}/bin"
+export PATH="${GOPATH}/bin:$HOME/.cargo/bin:$HOME/.vimpkg/bin:$PATH"
+
+# pnpm
+export PNPM_HOME="$HOME/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+
+# Bun
+export BUN_INSTALL="$HOME/.bun"
+case ":$PATH:" in
+  *":$BUN_INSTALL/bin:"*) ;;
+  *) export PATH="$BUN_INSTALL/bin:$PATH" ;;
+esac
+
+# Editor Configuration (Dynamic based on PATH)
+export EDITOR="nvim"
+export SUDO_EDITOR="$EDITOR"
 
 # ==============================
 # 6. TMUX Session Management Function & Alias
@@ -168,49 +184,82 @@ fv() { nvim "$(find . -type f -not -path '*/.*' | fzf)" }
 alias cl='clear'
 alias la=tree
 alias cat=bat
-alias v="/opt/homebrew/bin/nvim"
 alias http="xh"
-alias reload='source ~/.zshrc'
+alias reload='source ~/dotfiles/zshrc/.zshrc'
 alias ci='code-insiders'
+alias clauded='claude --dangerously-skip-permissions'
 
-# Dirs
+# --- Core Editor Aliases (Fixed!) ---
+alias v="nvim"
+alias vi="nvim"
+alias vim="nvim"
+alias n="nvim ."
+
+# --- Navigation Dirs ---
 alias ..="cd .."
 alias ...="cd ../.."
 alias ....="cd ../../.."
 alias .....="cd ../../../.."
 alias ......="cd ../../../../.."
 
-# Eza (Modern ls replacement)
+# --- Eza (Modern ls replacement) ---
 alias l="eza -l --icons --git -a"
 alias lt="eza --tree --level=2 --long --icons --git"
 alias ltree="eza --tree --level=2  --icons --git"
 
-# --- Python Development Aliases (Optimized for uv) ---
+# --- Python Development Aliases (uv) ---
 alias venv='uv venv'
-alias act='source venv/bin/activate'
-
-# --- UV Development Aliases ---
+alias act='source .venv/bin/activate'
 alias uva='uv add'
 alias uvd='uv dev'
 alias uvs='uv sync --all-extras'
-
-# ---- UV Pip Aliases ----
 alias uvpi='uv pip install'
 alias uvpr='uv pip install -r requirements.txt'
 
 # --- TypeScript/Node Development Aliases ---
+alias npmr='npm run'
+alias npi='npm install'
+alias tfw='tsc --watch'
+
+# pnpm
 alias pni='pnpm install'
 alias pnir='pnpm install -r'
 alias pna='pnpm add'
 alias pnd='pnpm dev'
-alias npmr='npm run'
-alias npi='npm install'
-alias tfw='tsc --watch'
+
+# Bun
+alias b="bun"
+alias bi="bun install"
+alias ba="bun add"
+alias bad="bun add -d"
+alias brm="bun remove"
+alias br="bun run"
+alias bd="bun run dev"
+alias bb="bun run build"
+alias bx="bun x"
 
 # --- Go Development Aliases ---
 alias gof='go fmt ./...'
 alias got='go test ./...'
 alias gwb='go build ./...'
+
+# --- Rust Development Aliases ---
+alias c="cargo"
+alias cb="cargo build"
+alias cr="cargo run"
+alias ct="cargo test"
+alias ca="cargo add"
+alias crm="cargo remove"
+alias cw="cargo watch -x run" 
+
+# --- Game Dev & C# Aliases ---
+alias rider="open -a 'Rider'"
+alias rd="rider ."
+alias dn="dotnet"
+alias dnb="dotnet build"
+alias dnr="dotnet run"
+alias uhub="open -a 'Unity Hub'"
+alias ueditor="open '/Users/Shared/Epic Games/UE_5.4/Engine/Binaries/Mac/UnrealEditor.app'"
 
 # --- Docker ---
 alias dco="docker compose"
@@ -219,8 +268,9 @@ alias dpa="docker ps -a"
 alias dl="docker ps -l -q"
 alias dx="docker exec -it"
 
-# --- Git Productivity Aliases (Switch-Optimized) ---
+# --- Git Productivity Aliases ---
 alias g='git'
+alias gf='git fetch'
 alias ga='git add -p'
 alias gadd='git add'
 alias gaa='git add .'
@@ -237,7 +287,7 @@ alias gcoall='git checkout -- .'
 alias gre='git reset'
 alias grem='git remote'
 
-# Modern Git Commands
+# --- Modern Git Commands ---
 alias gsw='git switch'
 alias gsn='git switch -c'
 alias grs='git restore'
