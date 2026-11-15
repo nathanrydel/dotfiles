@@ -6,10 +6,6 @@
 # 1. Critical Initialization (Pre-Config)
 # ==============================
 
-# Mise (Version Manager) Setup - Must run early for shims to work!
-if command -v mise &> /dev/null; then
-    eval "$(mise activate zsh)"
-fi
 
 # ==============================
 # 2. Base Zsh Settings & Completion
@@ -291,3 +287,8 @@ alias grem='git remote'
 alias gsw='git switch'
 alias gsn='git switch -c'
 alias grs='git restore'
+
+# Mise: activate last so its tool paths win over PATH edits above
+if command -v mise &> /dev/null; then
+    eval "$(mise activate zsh)"
+fi
