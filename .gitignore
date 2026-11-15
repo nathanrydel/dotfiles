@@ -1,4 +1,4 @@
-.DS_Store# ===================================================================
+# ===================================================================
 # A comprehensive .gitignore for a dotfiles repository
 # ===================================================================
 
@@ -51,7 +51,8 @@ credentials.json
 # Vim
 *.swp
 *.swo
-.viminfo # Contains buffer history, can be sensitive. Some people like to sync it, but ignoring is safer.
+# .viminfo contains buffer history and can be sensitive.
+.viminfo
 
 # VS Code
 .vscode/

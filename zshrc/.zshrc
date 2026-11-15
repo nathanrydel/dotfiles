@@ -51,7 +51,6 @@ fi
 if command -v fzf &> /dev/null; then
     source <(fzf --zsh)
     export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow'
-    [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 fi
 
 # Zsh Autosuggestions (Kept in Homebrew per our split)
@@ -87,13 +86,14 @@ export XDG_CONFIG_HOME="$HOME/.config"
 # 1. Local Bins
 # 2. Homebrew (GUI Casks and fallback formulas)
 # 3. System Paths
-export PATH="$HOME/.local/share/omarchy/bin:$PATH"
-export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+# System paths are already inherited. typeset -U dedupes only on `path=(...)` assignment, not `export PATH=`.
+typeset -U path
+path=("$HOME/.local/share/omarchy/bin" /opt/homebrew/bin $path)
 
 # Go & Rust & Vim Packages
 export GOPATH="$HOME/go"
 export GOBIN="${GOPATH}/bin"
-export PATH="${GOPATH}/bin:$HOME/.cargo/bin:$HOME/.vimpkg/bin:$PATH"
+path=("$GOBIN" "$HOME/.cargo/bin" "$HOME/.vimpkg/bin" $path)
 
 # pnpm
 export PNPM_HOME="$HOME/Library/pnpm"
@@ -119,7 +119,9 @@ export SUDO_EDITOR="$EDITOR"
 
 new_tmux () {
     session_dir=$(zoxide query --list | fzf)
-    session_name=$(basename "$session_dir")
+    [ -z "$session_dir" ] && return
+    # tmux reads "." and ":" in a target as window/pane separators
+    session_name=$(basename "$session_dir" | tr '.:' '__')
 
     if tmux has-session -t "$session_name" 2>/dev/null; then
         if [ -n "$TMUX" ]; then
@@ -207,7 +209,7 @@ alias ltree="eza --tree --level=2  --icons --git"
 alias venv='uv venv'
 alias act='source .venv/bin/activate'
 alias uva='uv add'
-alias uvd='uv dev'
+alias uvd='uv add --dev'
 alias uvs='uv sync --all-extras'
 alias uvpi='uv pip install'
 alias uvpr='uv pip install -r requirements.txt'
